@@ -8,14 +8,15 @@ sprite prototype objects can use this code
 
 */
 
-import {makeSound} from "./sound";
+//Dependencies
+import {makeSound} from "../library/sound";
 
 /*
 assets
 ------
 
 This is an object to help you load and use game assets, like images, fonts and sounds,
-and texture atlases. 
+and texture atlases.
 Here's how to use to load an image, a font and a texture atlas:
 
     assets.load([
@@ -23,10 +24,10 @@ Here's how to use to load an image, a font and a texture atlas:
       "fonts/puzzler.otf",
       "images/animals.json",
     ]).then(() => setup());
-    
-When all the assets have finished loading, the makeSprites function
+
+When all the assets have finsihed loading, the makeSprites function
 will run. (Replace makeSprites with an other function you need).
-When you've loaded an asset, you can access it like this:
+When you've loaded an asset, you can acccess it like this:
 
     imageObject = assets["images/cat.png"];
 
@@ -57,7 +58,6 @@ export let assets = {
         //The `load` method will return a Promise when everything has
         //loaded
         return new Promise(resolve => {
-            console.log(resolve)
 
             //The `loadHandler` counts the number of assets loaded, compares
             //it to the total number of assets that need to be loaded, and
@@ -92,7 +92,6 @@ export let assets = {
             sources.forEach(source => {
                 //Find the file extension of the asset
                 let extension = source.split(".").pop();
-                console.log(extension)
 
                 //Load images that have file extensions that match
                 //the imageExtensions array
@@ -166,7 +165,7 @@ export let assets = {
     loadFont(source, loadHandler) {
         //Use the font's file name as the `fontFamily` name
         let fontFamily = source.split("/").pop().split(".")[0];
-        //Append an `@font-face` style rule to the head of the HTML
+        //Append an `@afont-face` style rule to the head of the HTML
         //document. It's kind of a hack, but until HTML5 has a
         //proper font loading API, it will do for now
         let newStyle = document.createElement("style");
@@ -189,7 +188,7 @@ export let assets = {
 
         //Create an `onload` callback function that
         //will handle the file loading
-        xhr.onload = () => {
+        xhr.onload = event => {
             //Check to make sure the file has loaded properly
             if (xhr.status === 200) {
                 //Convert the JSON data file into an ordinary object
@@ -276,3 +275,367 @@ export let assets = {
         this[sound.name] = sound;
     }
 };
+
+/*
+
+outsideBounds
+-------------
+
+Check whether sprite is completely outside of
+a boundary
+
+*/
+
+export function outsideBounds(sprite, bounds, extra = undefined) {
+
+    let x = bounds.x,
+        y = bounds.y,
+        width = bounds.width,
+        height = bounds.height;
+
+    //The `collision` object is used to store which
+    //side of the containing rectangle the sprite hits
+    let collision;
+
+    //Left
+    if (sprite.x < x - sprite.width) {
+        collision = "left";
+    }
+    //Top
+    if (sprite.y < y - sprite.height) {
+        collision = "top";
+    }
+    //Right
+    if (sprite.x > width) {
+        collision = "right";
+    }
+    //Bottom
+    if (sprite.y > height) {
+        collision = "bottom";
+    }
+
+    //The `extra` function runs if there was a collision
+    //and `extra` has been defined
+    if (collision && extra) extra(collision);
+
+    //Return the `collision` object
+    return collision;
+};
+
+/*
+
+contain
+-------
+
+Keep a sprite contained inside a boundary
+
+*/
+
+export function contain(sprite, bounds, bounce = false, extra = undefined) {
+
+    let x = bounds.x,
+        y = bounds.y,
+        width = bounds.width,
+        height = bounds.height;
+
+    //The `collision` object is used to store which
+    //side of the containing rectangle the sprite hits
+    let collision;
+
+    //Left
+    if (sprite.x < x) {
+        //Bounce the sprite if `bounce` is true
+        if (bounce) sprite.vx *= -1;
+        //If the sprite has `mass`, let the mass
+        //affect the sprite's velocity
+        if (sprite.mass) sprite.vx /= sprite.mass;
+        sprite.x = x;
+        collision = "left";
+    }
+    //Top
+    if (sprite.y < y) {
+        if (bounce) sprite.vy *= -1;
+        if (sprite.mass) sprite.vy /= sprite.mass;
+        sprite.y = y;
+        collision = "top";
+    }
+    //Right
+    if (sprite.x + sprite.width > width) {
+        if (bounce) sprite.vx *= -1;
+        if (sprite.mass) sprite.vx /= sprite.mass;
+        sprite.x = width - sprite.width;
+        collision = "right";
+    }
+    //Bottom
+    if (sprite.y + sprite.height > height) {
+        if (bounce) sprite.vy *= -1;
+        if (sprite.mass) sprite.vy /= sprite.mass;
+        sprite.y = height - sprite.height;
+        collision = "bottom";
+    }
+
+    //The `extra` function runs if there was a collision
+    //and `extra` has been defined
+    if (collision && extra) extra(collision);
+
+    //Return the `collision` object
+    return collision;
+};
+
+/*
+random color
+-----------
+
+ */
+export function getRandomRgbaColor() {
+    let o = Math.round, r = Math.random, s = 255;
+    return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',' + r().toFixed(1) + ')';
+}
+
+/*
+
+distance
+----------------
+
+Find the distance in pixels between two sprites.
+Parameters:
+a. A sprite object with `centerX` and `centerY` properties.
+b. A sprite object with `centerX` and `centerY` properties.
+The function returns the number of pixels distance between the sprites.
+
+*/
+export function distance(s1, s2) {
+    let vx = s2.centerX - s1.centerX,
+        vy = s2.centerY - s1.centerY;
+    return Math.sqrt(vx * vx + vy * vy);
+}
+
+/*
+followEase
+----------------
+
+Make a sprite ease to the position of another sprite.
+Parameters:
+a. A sprite object with `centerX` and `centerY` properties. This is the `follower`
+sprite.
+b. A sprite object with `centerX` and `centerY` properties. This is the `leader` sprite that
+the follower will chase
+c. The easing value, such as 0.3. A higher number makes the follower move faster
+
+*/
+
+export function followEase(follower, leader, speed) {
+    //Figure out the distance between the sprites
+    let vx = leader.centerX - follower.centerX,
+        vy = leader.centerY - follower.centerY,
+        distance = Math.sqrt(vx * vx + vy * vy);
+
+    //Move the follower if it's more than 1 pixel
+    //away from the leader
+    if (distance >= 1) {
+        follower.x += vx * speed;
+        follower.y += vy * speed;
+    }
+}
+
+
+export let easeProperty = (start, end, speed) => {
+    //Calculate the distance
+    let distance = end - start;
+    //Move the follower if it's more than 1 pixel
+    //away from the leader
+    if (distance >= 1) {
+        return distance * speed;
+    } else {
+        return 0;
+    }
+}
+
+/*
+followConstant
+----------------
+
+Make a sprite move towards another sprite at a regular speed.
+Parameters:
+a. A sprite object with `center.x` and `center.y` properties. This is the `follower`
+sprite.
+b. A sprite object with `center.x` and `center.y` properties. This is the `leader` sprite that
+the follower will chase
+c. The speed value, such as 3. The is the pixels per frame that the sprite will move. A higher number makes the follower move faster.
+
+*/
+
+export function followConstant(follower, leader, speed) {
+    //Figure out the distance between the sprites
+    let vx = leader.centerX - follower.centerX,
+        vy = leader.centerY - follower.centerY,
+        distance = Math.sqrt(vx * vx + vy * vy);
+
+    //Move the follower if it's more than 1 move
+    //away from the leader
+    if (distance >= speed) {
+        follower.x += (vx / distance) * speed;
+        follower.y += (vy / distance) * speed;
+    }
+}
+
+
+/*
+angle
+-----
+
+Return the angle in Radians between two sprites.
+Parameters:
+a. A sprite object with `centerX` and `centerY` properties.
+b. A sprite object with `centerX` and `centerY` properties.
+You can use it to make a sprite rotate towards another sprite like this:
+
+    box.rotation = angle(box, pointer);
+
+*/
+
+export let angle = (s1, s2) => {
+    return Math.atan2(
+        s2.centerY - s1.centerY,
+        s2.centerX - s1.centerX
+    );
+}
+
+//### rotateAround
+//Make a sprite rotate around another sprite
+
+export function rotateSprite(rotatingSprite, centerSprite, distance, angle) {
+    rotatingSprite.x
+        = centerSprite.centerX - rotatingSprite.parent.x
+        + (distance * Math.cos(angle))
+        - rotatingSprite.halfWidth;
+
+    rotatingSprite.y
+        = centerSprite.centerY - rotatingSprite.parent.y
+        + (distance * Math.sin(angle))
+        - rotatingSprite.halfWidth;
+}
+
+//### rotatePoint
+//Make a point rotate around another point
+
+export function rotatePoint(pointX, pointY, distanceX, distanceY, angle) {
+    let point = {};
+    point.x = pointX + Math.cos(angle) * distanceX;
+    point.y = pointY + Math.sin(angle) * distanceY;
+    return point;
+};
+
+
+/*
+randomInt
+---------
+
+Return a random integer between a minimum and maximum value
+Parameters:
+a. An integer.
+b. An integer.
+Here's how you can use it to get a random number between, 1 and 10:
+
+    randomInt(1, 10);
+
+*/
+
+export let randomInt = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+/*
+randomFloat
+---------
+
+Return a random floating point number between a minimum and maximum value
+Parameters:
+a. Any number.
+b. Any number.
+Here's how you can use it to get a random floating point number between, 1 and 10:
+
+    randomFloat(1, 10);
+
+*/
+
+export let randomFloat = (min, max) => {
+    return min + Math.random() * (max - min);
+}
+
+/*
+shoot
+---------
+
+
+*/
+
+export function shoot(
+    shooter, angle, offsetFromCenter,
+    bulletSpeed, bulletArray, bulletSprite
+) {
+
+    //Make a new sprite using the user-supplied `bulletSprite` function
+    let bullet = bulletSprite();
+
+    //Set the bullet's start point
+    bullet.x
+        = shooter.centerX - bullet.halfWidth
+        + (offsetFromCenter * Math.cos(angle));
+    bullet.y
+        = shooter.centerY - bullet.halfHeight
+        + (offsetFromCenter * Math.sin(angle));
+
+    //Set the bullet's velocity
+    bullet.vx = Math.cos(angle) * bulletSpeed;
+    bullet.vy = Math.sin(angle) * bulletSpeed;
+
+    //Push the bullet into the `bulletArray`
+    bulletArray.push(bullet);
+}
+
+
+/*
+Wait
+----
+
+Lets you set up a timed sequence of events
+
+    wait(1000)
+      .then(() => console.log("One"))
+      .then(() => wait(1000))
+      .then(() => console.log("Two"))
+      .then(() => wait(1000))
+      .then(() => console.log("Three"))
+
+*/
+
+export function wait(duration = 0) {
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, duration);
+    });
+}
+
+/*
+Move
+----
+
+Move a sprite by adding it's velocity to it's position
+
+    move(sprite);
+*/
+
+export function move(...sprites) {
+    if (sprites.length === 1) {
+        let s = sprites[0];
+        s.x += s.vx;
+        s.y += s.vy;
+    } else {
+        for (let i = 0; i < sprites.length; i++) {
+            let s = sprites[i];
+            s.x += s.vx;
+            s.y += s.vy;
+        }
+    }
+}
+

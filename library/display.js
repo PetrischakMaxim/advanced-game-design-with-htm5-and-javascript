@@ -1073,7 +1073,7 @@ Button
 ---------
 
 A Button class to help make sprites with three
-interactive frames: op, over and down
+interactive frames: up, over and down
 
 */
 
@@ -1446,7 +1446,7 @@ export function updateDragAndDrop(pointer, canvas) {
         //pressed down and find out if it's touching a sprite
         if (dragSprite === null) {
             //Loop through the draggable sprites in reverse to start searching at the bottom of the stack
-            for (var i = draggableSprites.length - 1; i > -1; i--) {
+            for (let i = draggableSprites.length - 1; i > -1; i--) {
                 let sprite = draggableSprites[i];
                 //Check for a collision with the pointer using `hitTestPoint`
                 if (pointer.hitTestSprite(sprite) && sprite.draggable) {

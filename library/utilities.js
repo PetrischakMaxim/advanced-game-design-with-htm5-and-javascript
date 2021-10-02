@@ -404,7 +404,7 @@ b. A sprite object with `centerX` and `centerY` properties.
 The function returns the number of pixels distance between the sprites.
 
 */
-export function distance(s1, s2) {
+export function distance(s1, s2) { // sprite 1 sprite 2
     let vx = s2.centerX - s1.centerX,
         vy = s2.centerY - s1.centerY;
     return Math.sqrt(vx * vx + vy * vy);

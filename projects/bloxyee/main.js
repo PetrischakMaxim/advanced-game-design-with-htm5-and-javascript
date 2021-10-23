@@ -1,4 +1,4 @@
-import {game} from "../../library/engine.js";
+import {game} from "../library/engine.js";
 
 //Initialize the game engine and load all the assets
 let gameSize = 512;

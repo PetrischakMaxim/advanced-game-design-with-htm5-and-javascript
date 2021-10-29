@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Getters and setters</title>
+<script type="module">
+
+    let jar = {
+        numberOfCookies: 10,
+        get cookies() {
+            return this.numberOfCookies;
+        },
+        set cookies(value) {
+            this.numberOfCookies = value;
+        }
+    };
+
+    jar.cookies = 7;
+    console.log(jar.cookies);
+
+</script>

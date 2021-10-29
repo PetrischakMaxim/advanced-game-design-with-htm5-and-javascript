@@ -969,7 +969,6 @@ class Sprite extends DisplayObject {
             //a. Frames made from tileset sub-images.
             //If each frame is an array, then the frames were made from an
             //ordinary Image object using the `frames` method
-            console.log(this.frames)
             if (this.frames[0] instanceof Array) {
                 this.sourceX = this.frames[frameNumber][0];
                 this.sourceY = this.frames[frameNumber][1];
@@ -1228,6 +1227,7 @@ export function filmstrip(image, frameWidth, frameHeight, spacing = 0) {
         //Add the x and y value of each frame to the `positions` array
         positions.push([x, y]);
     }
+    console.log(positions)
 
     //Create and return the animation frames using the `frames` method
     return frames(image, positions, frameWidth, frameHeight);

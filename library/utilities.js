@@ -9,7 +9,7 @@ sprite prototype objects can use this code
 */
 
 //Dependencies
-import {makeSound} from "../library/sound";
+import {makeSound} from "./sound.js";
 
 /*
 assets
@@ -64,7 +64,7 @@ export let assets = {
             //resolves the Promise when everything has loaded
             let loadHandler = () => {
                 this.loaded += 1;
-                console.log(this.loaded);
+
 
                 //Check whether everything has loaded
                 if (this.toLoad === this.loaded) {
